@@ -58,42 +58,43 @@ public class SheepController : NetworkBehaviour
         }
 
         // Check direction and set animator parameters
-        if (Mathf.Abs(moveDirection.x) > Mathf.Abs(moveDirection.y))
-        {
-            // The sheep is moving more horizontally
-            if (moveDirection.x > 0)
+        
+            if (Mathf.Abs(moveDirection.x) > Mathf.Abs(moveDirection.y))
             {
-                animator.SetBool("isFacingRight", true);
-                animator.SetBool("isFacingUp", false);
-                animator.SetBool("isFacingLeft", false);
-                animator.SetBool("isFacingDown", false);
+                // The sheep is moving more horizontally
+                if (moveDirection.x > 0)
+                {
+                    animator.SetBool("isFacingRight", true);
+                    animator.SetBool("isFacingUp", false);
+                    animator.SetBool("isFacingLeft", false);
+                    animator.SetBool("isFacingDown", false);
+                }
+                else
+                {
+                    animator.SetBool("isFacingRight", false);
+                    animator.SetBool("isFacingUp", false);
+                    animator.SetBool("isFacingLeft", true);
+                    animator.SetBool("isFacingDown", false);
+                }
             }
             else
             {
-                animator.SetBool("isFacingRight", false);
-                animator.SetBool("isFacingUp", false);
-                animator.SetBool("isFacingLeft", true);
-                animator.SetBool("isFacingDown", false);
+                if (moveDirection.y > 0)
+                {
+                    animator.SetBool("isFacingRight", false);
+                    animator.SetBool("isFacingUp", true);
+                    animator.SetBool("isFacingLeft", false);
+                    animator.SetBool("isFacingDown", false);
+                }
+                else
+                {
+                    animator.SetBool("isFacingRight", false);
+                    animator.SetBool("isFacingUp", false);
+                    animator.SetBool("isFacingLeft", false);
+                    animator.SetBool("isFacingDown", true);
+                }
             }
-        }
-        else
-        {
-            if (moveDirection.y > 0)
-            {
-                animator.SetBool("isFacingRight", false);
-                animator.SetBool("isFacingUp", true);
-                animator.SetBool("isFacingLeft", false);
-                animator.SetBool("isFacingDown", false);
-            }
-            else
-            {
-                animator.SetBool("isFacingRight", false);
-                animator.SetBool("isFacingUp", false);
-                animator.SetBool("isFacingLeft", false);
-                animator.SetBool("isFacingDown", true);
-            }
-        }
-       
+        
     }
     private void OnTriggerEnter2D(Collider2D other)
     {
