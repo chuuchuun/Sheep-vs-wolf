@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Netcode;
 
-public class SheepController : MonoBehaviour
+public class SheepController : NetworkBehaviour
 {
     public float moveSpeed = 5f; // The speed at which the sheep moves
     private Vector2 moveDirection; // The current direction of movement
