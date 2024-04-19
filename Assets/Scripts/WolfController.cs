@@ -1,9 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Unity.Netcode;
 
-public class SheepController : PlayerController
+public class WolfController : PlayerController
 {
     override protected void SetAnimation(Vector2 moveDirection)
     {
@@ -48,15 +47,7 @@ public class SheepController : PlayerController
     {
         if (other.CompareTag("tree"))
         {
-            moveSpeed = 0.0f;
-            StartCoroutine(GoToNextTask(5));
+            ChooseNewDirection();
         }
-    }
-
-    IEnumerator GoToNextTask(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        moveSpeed = baseMoveSpeed;
-        ChooseNewDirection();
     }
 }
