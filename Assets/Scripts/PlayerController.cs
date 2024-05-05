@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
 
@@ -25,6 +24,7 @@ public abstract class PlayerController : NetworkBehaviour
 
         animator = GetComponent<Animator>();
     }
+
     // Start is called before the first frame update
     void Start()
     {
@@ -34,40 +34,60 @@ public abstract class PlayerController : NetworkBehaviour
 
     protected abstract void SetAnimation(Vector2 moveDirection);
 
-    void Update()
+    protected virtual bool ProcessCollision(Collider2D other, ref Vector2 moveDirection)
+    {
+        return false;
+    }
+    public virtual void Update()
     {
         Vector2 newPos = new Vector2(
-        transform.position.x + (moveSpeed * Time.deltaTime * moveDirection.x),
-        transform.position.y + (moveSpeed * Time.deltaTime * moveDirection.y));
+            transform.position.x + (moveSpeed * Time.deltaTime * moveDirection.x),
+            transform.position.y + (moveSpeed * Time.deltaTime * moveDirection.y));
 
         if (newPos.x < minX || newPos.x > maxX || newPos.y < minY || newPos.y > maxY)
         {
-            ChooseNewDirection();
+            // If newPos is at the edge of the map, choose a new direction in the opposite direction
+            moveDirection *= -1f;
+            directionTimer = directionChangeInterval; // Reset direction timer
         }
         else
         {
-            transform.Translate(moveDirection * moveSpeed * Time.deltaTime, Space.World);
+            Collider2D[] hitColliders = Physics2D.OverlapCircleAll(transform.position, 4.0f);
+            bool processedCollision = false; // Flag to check if any collision was processed
+            foreach (var hitCollider in hitColliders)
+            {
+                if (ProcessCollision(hitCollider, ref moveDirection))
+                {
+                    processedCollision = true;
+                    break; // Exit the loop if a collision was processed
+                }
+            }
+
+            // If no collision was processed and direction timer is expired, choose new direction
+            if (!processedCollision && directionTimer <= 0)
+            {
+                ChooseNewDirection();
+                directionTimer = directionChangeInterval; // Reset direction timer
+            }
         }
 
+        transform.Translate(moveDirection * moveSpeed * Time.deltaTime, Space.World);
+
         directionTimer -= Time.deltaTime;
-        if (directionTimer <= 0)
-        {
-            ChooseNewDirection();
-            directionTimer = directionChangeInterval;
-        }
 
         SetAnimation(moveDirection);
     }
 
+
     protected virtual void ColissionTriggered(Collider2D other)
     {
-
+        // Handle collision logic in derived classes
     }
+
     private void OnTriggerEnter2D(Collider2D other)
     {
         ColissionTriggered(other);
     }
-    
 
     protected void ChooseNewDirection()
     {
@@ -78,5 +98,4 @@ public abstract class PlayerController : NetworkBehaviour
         // Create a Vector2 direction from the angle
         moveDirection = new Vector2(Mathf.Cos(radians), Mathf.Sin(radians));
     }
-
 }

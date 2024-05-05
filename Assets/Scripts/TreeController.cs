@@ -6,7 +6,7 @@ public class TreeController : MonoBehaviour
 {
     private float done = 0.0f; // This will now represent the percentage of time spent colliding
     private float collisionTime = 0.0f; // Time in seconds spent colliding
-    private float maxCollisionTime = 1.0f; // Maximum time in seconds to reach 100% done
+    private float maxCollisionTime = 5.0f; // Maximum time in seconds to reach 100% done
 
     private void OnTriggerStay2D(Collider2D other)
     {
