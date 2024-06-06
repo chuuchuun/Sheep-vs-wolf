@@ -176,7 +176,7 @@ CapsuleCollider2D:
   m_CallbackLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
   m_Offset: {x: -0.0068222284, y: -0.0006481558}
@@ -221,7 +221,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 1516856696
+  GlobalObjectIdHash: 1216795958
   InScenePlacedSourceGlobalObjectIdHash: 0
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
@@ -244,6 +244,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   baseMoveSpeed: 1
   directionChangeInterval: 5
+  freeSheep: 1
+  detectionRadius: 3
+  wolfDetectionRadius: 4
+  lair: {fileID: 8756189668910907884, guid: cab4e392080b168489b7f7161ff679a5, type: 3}
+  wolf: {fileID: 5349263248768903793, guid: 778d50fa5cac8dd43afe384be4b68aa0, type: 3}
 --- !u!114 &2576406328484262798
 MonoBehaviour:
   m_ObjectHideFlags: 0

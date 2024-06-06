@@ -9,12 +9,12 @@ public abstract class PlayerController : NetworkBehaviour
 
     protected float moveSpeed;
 
-    private Vector2 moveDirection; // The current direction of movement
+    protected Vector2 moveDirection; // The current direction of movement
     private float directionTimer;
     protected Animator animator;
 
-    private float minX = -9f;
-    private float maxX = 9f;
+    private float minX = -10f;
+    private float maxX = 10f;
     private float minY = -4.5f;
     private float maxY = 4.5f;
 
@@ -52,7 +52,7 @@ public abstract class PlayerController : NetworkBehaviour
         }
         else
         {
-            Collider2D[] hitColliders = Physics2D.OverlapCircleAll(transform.position, 4.0f);
+            Collider2D[] hitColliders = Physics2D.OverlapCircleAll(transform.position, 2.0f);
             bool processedCollision = false; // Flag to check if any collision was processed
             foreach (var hitCollider in hitColliders)
             {
@@ -78,6 +78,15 @@ public abstract class PlayerController : NetworkBehaviour
         SetAnimation(moveDirection);
     }
 
+    public  void SetSpeed(float speed)
+    {
+        moveSpeed = speed;
+    }
+
+    protected virtual float GetSpeed()
+    {
+        return moveSpeed;
+    }
 
     protected virtual void ColissionTriggered(Collider2D other)
     {

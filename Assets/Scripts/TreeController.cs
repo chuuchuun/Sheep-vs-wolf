@@ -10,7 +10,7 @@ public class TreeController : MonoBehaviour
 
     private void OnTriggerStay2D(Collider2D other)
     {
-        Debug.Log("collided");
+        //Debug.Log("collided");
         if (other.CompareTag("sheep"))
         {
             collisionTime += Time.deltaTime;
@@ -18,7 +18,7 @@ public class TreeController : MonoBehaviour
 
             // Update done to represent the percentage of the maxCollisionTime
             done = (collisionTime / maxCollisionTime) * 100f;
-            Debug.Log(done);
+           // Debug.Log(done);
         }
     }
 

@@ -1,9 +1,21 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class WolfController : PlayerController
 {
+    private bool isCarrying = false;
+    private bool isSurrounded = false;
+    private SheepController carriedSheep; // Reference to the carried sheep
+    public LairController lair;
+    private int sheepAround = 0;
+    private bool changedBehavior = false;
+
+    private int sheepHolding = 0;
+    private bool stanned = false;
+
     override protected void SetAnimation(Vector2 moveDirection)
     {
         if (Mathf.Abs(moveDirection.x) > Mathf.Abs(moveDirection.y))
@@ -42,34 +54,187 @@ public class WolfController : PlayerController
             }
         }
     }
+
+    override protected float GetSpeed()
+    {
+        float speed = moveSpeed;
+        if (isCarrying)
+        {
+            speed *= 0.9f;
+        }
+
+        switch (sheepHolding)
+        {
+            case 0:
+                {
+                    return speed;
+                }
+
+            case 1:
+                {
+                    return speed * 0.9f;
+                }
+
+            case 2:
+                {
+                    return speed * 0.7f;
+                }
+
+            default:
+                {
+                    return 0;
+                }
+        }
+    }
+
+    public void Hold()
+    {
+        sheepHolding += 1;
+
+        if (sheepHolding == 5)
+        {
+            Stan(5.0f);
+
+            moveSpeed = 1.5f;
+            stanned = false;
+        }
+    }
+
+    private void ReleasePrey()
+    {
+        isCarrying = false;
+    }
+
     protected override bool ProcessCollision(Collider2D other, ref Vector2 moveDirection)
     {
-        if (other.CompareTag("sheep"))
+        if (other.CompareTag("sheep") && !isCarrying && other.GetComponent<SheepController>().freeSheep)
         {
-            // Calculate the direction towards the sheep
             Vector2 wolfPosition = new Vector2(transform.position.x, transform.position.y);
             Vector2 sheepPosition = other.transform.position;
             Vector2 directionToSheep = (sheepPosition - wolfPosition).normalized;
 
-            // Set the move direction towards the sheep
-            moveDirection = new Vector2(directionToSheep.x, directionToSheep.y);
-            Debug.Log("Moving towards the sheep!");
+            moveDirection = directionToSheep;
+            //Debug.Log("Moving towards the sheep!");
             return true;
         }
-       // Choose a new direction if the collision is not with a sheep
-            return false;
-        
+        else if (isCarrying)
+        {
+            Vector2 wolfPosition = new Vector2(transform.position.x, transform.position.y);
+            Vector2 lairPosition = lair.transform.position;
+            Vector2 directionToLair = (lairPosition - wolfPosition).normalized;
+
+            moveDirection = directionToLair;
+            //Debug.Log("Moving towards the lair!");
+            return true;
+        }
+        return false;
     }
 
-
-    override protected void ColissionTriggered(Collider2D other)
+    private void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("tree"))
         {
             ChooseNewDirection();
         }
-        else if (other.CompareTag("sheep"))
+        else if (other.CompareTag("sheep") && other.GetComponent<SheepController>().freeSheep && !isCarrying)
         {
+            isCarrying = true;
+            carriedSheep = other.GetComponent<SheepController>();
+            if (carriedSheep != null)
+            {
+                carriedSheep.SetSpeed(0);
+                Debug.Log("Captured a sheep!");
+            }
         }
+        else if (other.CompareTag("lair") && isCarrying)
+        {
+            isCarrying = false;
+            Debug.Log("Delivered the sheep to the lair!");
+            ChooseNewDirection();
+            carriedSheep.Die();
+        }
+    }
+
+    private void DetectSheepAround()
+    {
+        Collider2D[] colliders = Physics2D.OverlapCircleAll(transform.position, 2.0f);
+        sheepAround = 0;
+        foreach (var collider in colliders)
+        {
+            if (collider.CompareTag("sheep") && collider.GetComponent<SheepController>().freeSheep)
+            {
+                sheepAround++;
+            }
+        }
+
+        /*if (sheepAround >= 2 && !changedBehavior)
+        {
+            ChangeBehavior();
+            changedBehavior = true;
+        }
+        else if (sheepAround < 2 && changedBehavior)
+        {
+            RevertBehavior();
+            changedBehavior = false;
+        }*/
+    }
+
+    private void ChangeBehavior()
+    {
+        if (!isCarrying)
+        {
+            moveSpeed = -1.5f;
+            isSurrounded = true;
+            Debug.Log("More than 3 sheep around, changing behavior!");
+            StartCoroutine(Surrounded(5.0f));
+        }
+    }
+
+    private void RevertBehavior()
+    {
+        moveSpeed = 1.5f;
+        isSurrounded = false;
+        Debug.Log("Less than or equal to 3 sheep around, reverting behavior!");
+    }
+
+    public override void Update()
+    {
+        if (!isCarrying && !stanned)
+        {
+            DetectSheepAround();
+        }
+        base.Update();
+
+        if (isCarrying && carriedSheep != null)
+        {
+            carriedSheep.transform.position = transform.position;
+        }
+    }
+
+    IEnumerator Surrounded(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (sheepAround <= 2)
+        {
+            RevertBehavior();
+        }
+    }
+
+    IEnumerator Stan(float delay)
+    {
+        moveSpeed = 0;
+        isCarrying = false;
+        stanned = true;
+        yield return new WaitForSeconds(delay);
+    }
+
+    public bool IsSurrounded()
+    {
+        return isSurrounded;
+    }
+
+    public bool IsCarrying()
+    {
+        return isCarrying;
     }
 }
