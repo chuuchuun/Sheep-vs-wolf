@@ -15,15 +15,18 @@ public class SheepController : PlayerController
     public float wolfDetectionRadius = 4.0f; // Radius to detect the wolf
     private int sheepAround = 0;
     private bool beingSaved = false;
+
     private float savingProgress = 0.0f;
     private float savingDuration = 3.0f; // Duration to save in seconds
-    private Coroutine deathCoroutine;
+
+    private Coroutine eatCoroutine;
+
     public LairController lair;
     public WolfController wolf;
 
-    private bool lookingForSheep = false;
     private bool isHelping = false;
     private SheepController sheepToHelp = null;
+    private bool isHolding = false;
 
     override protected void SetAnimation(Vector2 moveDirection)
     {
@@ -76,8 +79,14 @@ public class SheepController : PlayerController
         }
         else if (other.CompareTag("wolf"))
         {
-            wasCaught = true;
-         
+            if (other.GetComponent<WolfController>().IsCarrying() && !isHolding && !other.GetComponent<WolfController>().stanned)
+            {
+                other.GetComponent<WolfController>().Hold();
+                isHolding = true;
+            } else if (!other.GetComponent<WolfController>().stanned)
+            {
+                wasCaught = true;
+            }
         }
         else if (wasCaught && other.CompareTag("lair"))
         {
@@ -90,6 +99,11 @@ public class SheepController : PlayerController
 
             NotifySheepAboutDeath();
         }
+    }
+
+    public void WolfStanNotify()
+    {
+        StopHelpingSheep();
     }
 
     private void NotifySheepAboutDeath()
@@ -116,26 +130,31 @@ public class SheepController : PlayerController
         NotifySheepAboutDeath();
     }
 
+    public void Free()
+    {
+        wasCaught = false;
+        moveSpeed = baseMoveSpeed;
+        transform.position = new Vector2(transform.position.x + 0.1f, transform.position.y);
+        ChooseNewDirection();
+        freeSheep = true;
+
+        StopHelpingSheep();
+    }
+
     protected override bool ProcessCollision(Collider2D other, ref Vector2 moveDirection)
     {
         if (!wasCaught)
         {
             if (other.CompareTag("wolf"))
             {
-                if (AreOtherSheepNearby() && !other.GetComponent<WolfController>().IsCarrying() && !lair.isEmpty)
+                if (other.GetComponent<WolfController>().IsCarrying() && !other.GetComponent<WolfController>().stanned)
                 {
-                    if (!other.GetComponent<WolfController>().IsSurrounded())
-                    {
-                        Vector2 sheepPosition = new Vector2(transform.position.x, transform.position.y);
-                        Vector2 wolfPosition = other.transform.position;
-                        Vector2 directionToWolf = (wolfPosition - sheepPosition).normalized;
+                    Vector2 sheepPosition = new Vector2(transform.position.x, transform.position.y);
+                    Vector2 wolfPosition = other.transform.position;
+                    Vector2 directionToWolf = (wolfPosition - sheepPosition).normalized;
 
-                        moveDirection = directionToWolf;
-                        //Debug.Log("Moving towards the wolf!");
-                        return true;
-                    }
-                    return false;
-
+                    moveDirection = directionToWolf;
+                    return true;
                 }
                 else
                 {
@@ -152,6 +171,7 @@ public class SheepController : PlayerController
             }
             else if (other.CompareTag("tree"))
             {
+                isHolding = false;
                 if (!fleeing)
                 {
                     // Calculate the direction towards the tree
@@ -165,6 +185,8 @@ public class SheepController : PlayerController
                     return true;
                 }
             }
+
+            isHolding = false;
             /*else if(other.CompareTag("lair") && lair.isEmpty)
             {
                 Vector2 sheepPosition = new Vector2(transform.position.x, transform.position.y);
@@ -192,6 +214,7 @@ public class SheepController : PlayerController
     public override void Update()
     {
         base.Update(); // Call the parent class's Update method first
+
         if (!wasCaught)
         {
             if (fleeing && !IsWolfWithinRadius())
@@ -243,15 +266,13 @@ public class SheepController : PlayerController
     {
         isHelping = true;
         sheepToHelp = sheep;
-        lookingForSheep = true;
-
     }
 
     protected void StopHelpingSheep()
     {
         isHelping = false;
-        lookingForSheep = true;
         sheepToHelp = null;
+        isHolding = false;
     }
 
     private bool IsWolfWithinRadius()

@@ -41,13 +41,13 @@ public abstract class PlayerController : NetworkBehaviour
     public virtual void Update()
     {
         Vector2 newPos = new Vector2(
-            transform.position.x + (moveSpeed * Time.deltaTime * moveDirection.x),
-            transform.position.y + (moveSpeed * Time.deltaTime * moveDirection.y));
+            transform.position.x + (GetSpeed() * Time.deltaTime * moveDirection.x),
+            transform.position.y + (GetSpeed() * Time.deltaTime * moveDirection.y));
 
         if (newPos.x < minX || newPos.x > maxX || newPos.y < minY || newPos.y > maxY)
         {
             // If newPos is at the edge of the map, choose a new direction in the opposite direction
-            moveDirection *= -1f;
+            ChooseNewDirection();
             directionTimer = directionChangeInterval; // Reset direction timer
         }
         else
@@ -71,7 +71,7 @@ public abstract class PlayerController : NetworkBehaviour
             }
         }
 
-        transform.Translate(moveDirection * moveSpeed * Time.deltaTime, Space.World);
+        transform.Translate(moveDirection * GetSpeed() * Time.deltaTime, Space.World);
 
         directionTimer -= Time.deltaTime;
 

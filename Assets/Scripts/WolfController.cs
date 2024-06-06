@@ -14,7 +14,7 @@ public class WolfController : PlayerController
     private bool changedBehavior = false;
 
     private int sheepHolding = 0;
-    private bool stanned = false;
+    public bool stanned = false;
 
     override protected void SetAnimation(Vector2 moveDirection)
     {
@@ -57,10 +57,15 @@ public class WolfController : PlayerController
 
     override protected float GetSpeed()
     {
+        if (stanned)
+        {
+            return 0;
+        }
+
         float speed = moveSpeed;
         if (isCarrying)
         {
-            speed *= 0.9f;
+            speed *= 0.6f;
         }
 
         switch (sheepHolding)
@@ -91,18 +96,34 @@ public class WolfController : PlayerController
     {
         sheepHolding += 1;
 
-        if (sheepHolding == 5)
+        Debug.Log("One more sheep holded");
+        if (sheepHolding == 3)
         {
-            Stan(5.0f);
-
-            moveSpeed = 1.5f;
-            stanned = false;
+            Sleep(5.0f);
         }
     }
 
-    private void ReleasePrey()
+    public void Sleep(float time)
     {
+        moveSpeed = 0;
         isCarrying = false;
+
+        carriedSheep.Free();
+        carriedSheep = null;
+        Debug.Log("Stanned");
+        stanned = true;
+        sheepHolding = 0;
+
+        Collider2D[] colliders = Physics2D.OverlapCircleAll(transform.position, 2.0f);
+        foreach (var collider in colliders)
+        {
+            if (collider.CompareTag("sheep"))
+            {
+                collider.GetComponent<SheepController>().WolfStanNotify();
+            }
+        }
+
+        StartCoroutine(Stan(time));
     }
 
     protected override bool ProcessCollision(Collider2D other, ref Vector2 moveDirection)
@@ -136,7 +157,7 @@ public class WolfController : PlayerController
         {
             ChooseNewDirection();
         }
-        else if (other.CompareTag("sheep") && other.GetComponent<SheepController>().freeSheep && !isCarrying)
+        else if (other.CompareTag("sheep") && other.GetComponent<SheepController>().freeSheep && !isCarrying && !stanned)
         {
             isCarrying = true;
             carriedSheep = other.GetComponent<SheepController>();
@@ -152,6 +173,8 @@ public class WolfController : PlayerController
             Debug.Log("Delivered the sheep to the lair!");
             ChooseNewDirection();
             carriedSheep.Die();
+
+            Sleep(1.0f);
         }
     }
 
@@ -203,10 +226,12 @@ public class WolfController : PlayerController
         {
             DetectSheepAround();
         }
+
         base.Update();
 
         if (isCarrying && carriedSheep != null)
         {
+            Debug.Log(carriedSheep.transform.position);
             carriedSheep.transform.position = transform.position;
         }
     }
@@ -222,10 +247,14 @@ public class WolfController : PlayerController
 
     IEnumerator Stan(float delay)
     {
-        moveSpeed = 0;
-        isCarrying = false;
-        stanned = true;
         yield return new WaitForSeconds(delay);
+
+        
+        stanned = false;
+
+        ChooseNewDirection();
+        moveSpeed = baseMoveSpeed;
+        Debug.Log("Unstanned");
     }
 
     public bool IsSurrounded()
