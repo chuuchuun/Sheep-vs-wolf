@@ -16,6 +16,8 @@ public class WolfController : PlayerController
     private int sheepHolding = 0;
     public bool stanned = false;
 
+    private SheepController targetSheep = null;
+
     override protected void SetAnimation(Vector2 moveDirection)
     {
         if (Mathf.Abs(moveDirection.x) > Mathf.Abs(moveDirection.y))
@@ -96,8 +98,8 @@ public class WolfController : PlayerController
     {
         sheepHolding += 1;
 
-        Debug.Log("One more sheep holded");
-        if (sheepHolding == 3)
+        //Debug.Log("One more sheep holded");
+        if (sheepHolding >= 3)
         {
             Sleep(5.0f);
         }
@@ -113,7 +115,9 @@ public class WolfController : PlayerController
         Debug.Log("Stanned");
         stanned = true;
         sheepHolding = 0;
-
+        rb.isKinematic = true;
+        GetComponent<Collider2D>().enabled = false;
+        Debug.Log("disabled");
         Collider2D[] colliders = Physics2D.OverlapCircleAll(transform.position, 2.0f);
         foreach (var collider in colliders)
         {
@@ -128,10 +132,11 @@ public class WolfController : PlayerController
 
     protected override bool ProcessCollision(Collider2D other, ref Vector2 moveDirection)
     {
-        if (other.CompareTag("sheep") && !isCarrying && other.GetComponent<SheepController>().freeSheep)
+        if (other.CompareTag("sheep") && !isCarrying && targetSheep == null && other.GetComponent<SheepController>().freeSheep)
         {
+            targetSheep = other.GetComponent<SheepController>();
             Vector2 wolfPosition = new Vector2(transform.position.x, transform.position.y);
-            Vector2 sheepPosition = other.transform.position;
+            Vector2 sheepPosition = targetSheep.transform.position;
             Vector2 directionToSheep = (sheepPosition - wolfPosition).normalized;
 
             moveDirection = directionToSheep;
@@ -140,6 +145,7 @@ public class WolfController : PlayerController
         }
         else if (isCarrying)
         {
+            targetSheep = null;
             Vector2 wolfPosition = new Vector2(transform.position.x, transform.position.y);
             Vector2 lairPosition = lair.transform.position;
             Vector2 directionToLair = (lairPosition - wolfPosition).normalized;
@@ -148,6 +154,7 @@ public class WolfController : PlayerController
             //Debug.Log("Moving towards the lair!");
             return true;
         }
+        targetSheep = null;
         return false;
     }
 
@@ -165,6 +172,7 @@ public class WolfController : PlayerController
             {
                 carriedSheep.SetSpeed(0);
                 Debug.Log("Captured a sheep!");
+                targetSheep = null;
             }
         }
         else if (other.CompareTag("lair") && isCarrying)
@@ -189,17 +197,6 @@ public class WolfController : PlayerController
                 sheepAround++;
             }
         }
-
-        /*if (sheepAround >= 2 && !changedBehavior)
-        {
-            ChangeBehavior();
-            changedBehavior = true;
-        }
-        else if (sheepAround < 2 && changedBehavior)
-        {
-            RevertBehavior();
-            changedBehavior = false;
-        }*/
     }
 
     private void ChangeBehavior()
@@ -251,10 +248,21 @@ public class WolfController : PlayerController
 
         
         stanned = false;
-
+        rb.isKinematic = false;
+        GetComponent<Collider2D>().enabled = true;
+        Debug.Log("enabled");
         ChooseNewDirection();
         moveSpeed = baseMoveSpeed;
         Debug.Log("Unstanned");
+        targetSheep = null;
+    }
+
+    private IEnumerator DisableRigidbody(float delay)
+    {
+       
+        yield return new WaitForSeconds(delay);
+      
+
     }
 
     public bool IsSurrounded()

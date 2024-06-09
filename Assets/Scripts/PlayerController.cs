@@ -18,6 +18,8 @@ public abstract class PlayerController : NetworkBehaviour
     private float minY = -4.5f;
     private float maxY = 4.5f;
 
+    public Rigidbody2D rb;
+
     private void Awake()
     {
         moveSpeed = baseMoveSpeed;
@@ -28,6 +30,7 @@ public abstract class PlayerController : NetworkBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        rb = GetComponent<Rigidbody2D>();
         directionTimer = directionChangeInterval;
         ChooseNewDirection();
     }
@@ -52,7 +55,7 @@ public abstract class PlayerController : NetworkBehaviour
         }
         else
         {
-            Collider2D[] hitColliders = Physics2D.OverlapCircleAll(transform.position, 2.0f);
+            Collider2D[] hitColliders = Physics2D.OverlapCircleAll(transform.position, 3.0f);
             bool processedCollision = false; // Flag to check if any collision was processed
             foreach (var hitCollider in hitColliders)
             {
